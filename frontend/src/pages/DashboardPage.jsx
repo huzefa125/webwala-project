@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { CheckCircle2, Circle, Trash2, Edit2, Filter } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { CheckCircle2, Circle, Filter } from 'lucide-react';
 import TaskForm from '../components/TaskForm';
 import TaskList from '../components/TaskList';
 import { TaskListSkeleton } from '../components/SkeletonLoading';
@@ -11,11 +11,7 @@ const DashboardPage = ({ user }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState('all');
 
-  useEffect(() => {
-    fetchTasks();
-  }, [filter]);
-
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     setIsLoading(true);
     try {
       const filterParam = filter === 'all' ? null : filter;
@@ -27,7 +23,11 @@ const DashboardPage = ({ user }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [filter]);
+
+  useEffect(() => {
+    fetchTasks();
+  }, [fetchTasks]);
 
   const handleAddTask = async (title) => {
     try {
