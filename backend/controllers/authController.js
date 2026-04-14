@@ -1,27 +1,18 @@
 const User = require('../models/User');
 const generateToken = require('../middleware/tokenGenerator');
-const { validationResult } = require('express-validator');
 
 // Register User
 exports.registerUser = async (req, res) => {
   try {
-    // Check for validation errors
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ 
-        success: false, 
-        errors: errors.array() 
-      });
-    }
-
     const { name, email, password } = req.body;
 
     // Check if user already exists
     let user = await User.findOne({ email });
     if (user) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'User already exists' 
+      return res.status(400).json({
+        success: false,
+        message: 'This email is already registered. Please login instead.',
+        errors: { email: 'Email already in use' },
       });
     }
 
@@ -39,7 +30,7 @@ exports.registerUser = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'User registered successfully',
+      message: 'Account created successfully',
       token,
       user: {
         id: user._id,
@@ -49,10 +40,9 @@ exports.registerUser = async (req, res) => {
     });
   } catch (error) {
     console.error('Register error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Server error during registration',
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Error creating account. Please try again later.',
     });
   }
 };
@@ -60,24 +50,15 @@ exports.registerUser = async (req, res) => {
 // Login User
 exports.loginUser = async (req, res) => {
   try {
-    // Check for validation errors
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ 
-        success: false, 
-        errors: errors.array() 
-      });
-    }
-
     const { email, password } = req.body;
 
     // Find user by email and get password field
     const user = await User.findOne({ email }).select('+password');
 
     if (!user) {
-      return res.status(401).json({ 
-        success: false, 
-        message: 'Invalid email or password' 
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password',
       });
     }
 
@@ -85,9 +66,9 @@ exports.loginUser = async (req, res) => {
     const isPasswordMatch = await user.matchPassword(password);
 
     if (!isPasswordMatch) {
-      return res.status(401).json({ 
-        success: false, 
-        message: 'Invalid email or password' 
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password',
       });
     }
 
@@ -106,10 +87,9 @@ exports.loginUser = async (req, res) => {
     });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Server error during login',
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Error logging in. Please try again later.',
     });
   }
 };

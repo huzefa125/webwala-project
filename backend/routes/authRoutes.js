@@ -1,18 +1,44 @@
 const express = require('express');
-const { body } = require('express-validator');
+const { body, validationResult } = require('express-validator');
 const { registerUser, loginUser, getCurrentUser } = require('../controllers/authController');
 const authMiddleware = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
+// Validation middleware to format errors
+const handleValidationErrors = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const formattedErrors = {};
+    errors.array().forEach((error) => {
+      formattedErrors[error.param] = error.msg;
+    });
+    return res.status(400).json({
+      success: false,
+      message: 'Validation failed',
+      errors: formattedErrors,
+    });
+  }
+  next();
+};
+
 // Register route
 router.post(
   '/register',
   [
-    body('name', 'Name is required').notEmpty().trim(),
-    body('email', 'Valid email is required').isEmail(),
-    body('password', 'Password must be at least 6 characters').isLength({ min: 6 }),
+    body('name')
+      .trim()
+      .notEmpty().withMessage('Name is required')
+      .isLength({ min: 2 }).withMessage('Name must be at least 2 characters'),
+    body('email')
+      .isEmail().withMessage('Please enter a valid email address')
+      .normalizeEmail(),
+    body('password')
+      .isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
+      .matches(/[a-z]/).withMessage('Password must contain lowercase letters')
+      .matches(/[A-Z]/).withMessage('Password must contain uppercase letters'),
   ],
+  handleValidationErrors,
   registerUser
 );
 
@@ -20,9 +46,13 @@ router.post(
 router.post(
   '/login',
   [
-    body('email', 'Valid email is required').isEmail(),
-    body('password', 'Password is required').notEmpty(),
+    body('email')
+      .isEmail().withMessage('Please enter a valid email address')
+      .normalizeEmail(),
+    body('password')
+      .notEmpty().withMessage('Password is required'),
   ],
+  handleValidationErrors,
   loginUser
 );
 

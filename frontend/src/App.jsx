@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import Header from './components/Header';
 import ProtectedRoute from './components/ProtectedRoute';
 import RegisterPage from './pages/RegisterPage';
@@ -60,6 +61,7 @@ function App() {
 
   return (
     <Router>
+      <Toaster />
       <div className="min-h-screen bg-gray-50 flex flex-col">
         {isAuthenticated && <Header user={user} onLogout={handleLogout} />}
 

@@ -1,5 +1,5 @@
 const express = require('express');
-const { body } = require('express-validator');
+const { body, validationResult, param } = require('express-validator');
 const {
   addTask,
   getAllTasks,
@@ -10,13 +10,36 @@ const authMiddleware = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
+// Validation middleware to format errors
+const handleValidationErrors = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const formattedErrors = {};
+    errors.array().forEach((error) => {
+      formattedErrors[error.param] = error.msg;
+    });
+    return res.status(400).json({
+      success: false,
+      message: 'Validation failed',
+      errors: formattedErrors,
+    });
+  }
+  next();
+};
+
 // All task routes require authentication
 router.use(authMiddleware);
 
 // Add task
 router.post(
   '/',
-  [body('title', 'Task title is required').notEmpty().trim()],
+  [
+    body('title')
+      .trim()
+      .notEmpty().withMessage('Task title is required')
+      .isLength({ min: 1, max: 200 }).withMessage('Title must be between 1-200 characters'),
+  ],
+  handleValidationErrors,
   addTask
 );
 
@@ -27,13 +50,28 @@ router.get('/', getAllTasks);
 router.put(
   '/:id',
   [
-    body('title', 'Task title cannot be empty').optional().notEmpty().trim(),
-    body('completed', 'Completed must be a boolean').optional().isBoolean(),
+    param('id').isMongoId().withMessage('Invalid task ID'),
+    body('title')
+      .optional()
+      .trim()
+      .notEmpty().withMessage('Title cannot be empty')
+      .isLength({ min: 1, max: 200 }).withMessage('Title must be between 1-200 characters'),
+    body('completed')
+      .optional()
+      .isBoolean().withMessage('Completed must be true or false'),
   ],
+  handleValidationErrors,
   updateTask
 );
 
 // Delete task
-router.delete('/:id', deleteTask);
+router.delete(
+  '/:id',
+  [
+    param('id').isMongoId().withMessage('Invalid task ID'),
+  ],
+  handleValidationErrors,
+  deleteTask
+);
 
 module.exports = router;

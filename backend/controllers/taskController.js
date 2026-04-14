@@ -1,18 +1,8 @@
 const Task = require('../models/Task');
-const { validationResult } = require('express-validator');
 
 // Add Task
 exports.addTask = async (req, res) => {
   try {
-    // Check for validation errors
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ 
-        success: false, 
-        errors: errors.array() 
-      });
-    }
-
     const { title } = req.body;
     const userId = req.user.userId;
 
@@ -25,15 +15,14 @@ exports.addTask = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Task added successfully',
+      message: 'Task created successfully',
       task,
     });
   } catch (error) {
     console.error('Add task error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error adding task',
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Error creating task. Please try again.',
     });
   }
 };
@@ -61,10 +50,9 @@ exports.getAllTasks = async (req, res) => {
     });
   } catch (error) {
     console.error('Get tasks error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error fetching tasks',
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching tasks. Please try again.',
     });
   }
 };
@@ -72,15 +60,6 @@ exports.getAllTasks = async (req, res) => {
 // Update Task (mark complete and/or edit title)
 exports.updateTask = async (req, res) => {
   try {
-    // Check for validation errors
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ 
-        success: false, 
-        errors: errors.array() 
-      });
-    }
-
     const { id } = req.params;
     const { title, completed } = req.body;
     const userId = req.user.userId;
@@ -89,16 +68,16 @@ exports.updateTask = async (req, res) => {
     let task = await Task.findById(id);
 
     if (!task) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Task not found' 
+      return res.status(404).json({
+        success: false,
+        message: 'Task not found',
       });
     }
 
     if (task.user.toString() !== userId) {
-      return res.status(403).json({ 
-        success: false, 
-        message: 'Not authorized to update this task' 
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to modify this task',
       });
     }
 
@@ -115,10 +94,9 @@ exports.updateTask = async (req, res) => {
     });
   } catch (error) {
     console.error('Update task error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error updating task',
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Error updating task. Please try again.',
     });
   }
 };
@@ -133,16 +111,16 @@ exports.deleteTask = async (req, res) => {
     const task = await Task.findById(id);
 
     if (!task) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Task not found' 
+      return res.status(404).json({
+        success: false,
+        message: 'Task not found',
       });
     }
 
     if (task.user.toString() !== userId) {
-      return res.status(403).json({ 
-        success: false, 
-        message: 'Not authorized to delete this task' 
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to delete this task',
       });
     }
 
@@ -154,10 +132,9 @@ exports.deleteTask = async (req, res) => {
     });
   } catch (error) {
     console.error('Delete task error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error deleting task',
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting task. Please try again.',
     });
   }
 };
